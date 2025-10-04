@@ -64,5 +64,21 @@ void main() {
         client.dispose();
       },
     );
+
+    test('getJson surfaces serialization failure on invalid JSON', () async {
+      final client = ApiClient(
+        httpClient: MockClient((request) async {
+          return http.Response('not-json', 200);
+        }),
+      );
+
+      final result = await client.getJson('https://example.com/bad-json');
+
+      expect(result.isFailure, isTrue);
+      final error = result.asFailure.error;
+      expect(error.type, AppErrorType.serialization);
+
+      client.dispose();
+    });
   });
 }

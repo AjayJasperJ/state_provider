@@ -1,6 +1,6 @@
 name: state_provider
 description: "A comprehensive state management and pagination toolkit for Flutter apps."
-version: 0.0.1
+version: 1.0.0
 homepage:
 
 environment:

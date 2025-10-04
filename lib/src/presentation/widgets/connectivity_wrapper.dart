@@ -1,10 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../data/datasources/internet_service.dart';
-import '../../data/repositories/request_cache_manager.dart';
 import '../../utils/dev_logger.dart';
 
 /// A small wrapper that calls [onReconnect] when the app transitions from
@@ -15,6 +12,7 @@ class ConnectivityWrapper extends StatefulWidget {
   final Widget child;
   final VoidCallback? onReconnect;
   final bool onlyWhenVisible;
+
   const ConnectivityWrapper({
     super.key,
     required this.child,
@@ -76,7 +74,6 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
       });
     }
     if (current) {
-      unawaited(RequestCacheManager.instance.triggerReplay());
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 300), () {
         if (!mounted) return;

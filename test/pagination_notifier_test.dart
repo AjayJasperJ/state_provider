@@ -76,9 +76,16 @@ void main() {
     });
 
     test('records loadMoreError without duplicating requests', () async {
+      var firstLoad = true;
       var failNext = true;
       final notifier = PaginationNotifier<int, String>(
         fetchPage: (page) async {
+          if (firstLoad) {
+            firstLoad = false;
+            return PaginationFetchResult.success(
+              PaginationPage(items: [page], hasMore: true, pageNumber: page),
+            );
+          }
           if (failNext) {
             failNext = false;
             return const PaginationFetchResult.failure('rate limited');
@@ -93,10 +100,11 @@ void main() {
       await notifier.loadMore();
 
       expect(notifier.state.loadMoreError, 'rate limited');
-      expect(notifier.state.items, [0, 1]);
+      expect(notifier.state.items, [0]);
 
       await notifier.loadMore();
       expect(notifier.state.loadMoreError, isNull);
+      expect(notifier.state.items, [0, 1]);
       expect(notifier.state.hasMore, isFalse);
     });
   });

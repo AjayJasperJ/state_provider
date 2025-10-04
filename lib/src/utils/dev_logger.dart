@@ -203,9 +203,4 @@ class DevLogger {
       error(message, tag: 'CONNECTIVITY');
     }
   }
-
-  /// Log cache events
-  static void cache(String event, {Object? data}) {
-    info(event, tag: 'CACHE', data: data);
-  }
 }

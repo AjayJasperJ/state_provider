@@ -148,33 +148,22 @@ Sealed class result type for safe error handling with functional programming pat
 ### 🅱️ **Bootstrap (StateProviderBootstrap)**
 One-line initialization utility for setting up all core services and dependencies.
 - **Host Configuration** - Automatic API base host and path setup
-- **Service Registration** - Initializes logging, caching, and connectivity services
-- **Client Factory** - Creates configured `CachedApiClient` instances
-
-### 🅲️ **CachedApiClient**
-Network client with automatic offline request queueing and intelligent retry mechanisms.
-- **Offline Queueing** - Requests are cached when offline and replayed when online
-- **Retry Policies** - Configurable backoff strategies and retry limits
-- **Transparent Caching** - Drop-in replacement for `ApiClient` with caching benefits
-
-### 🅲️ **CachedRequest**
-Persistent request representation that survives app restarts and supports retry logic.
-- **Serializable** - JSON serialization for disk persistence
-- **Retry Tracking** - Attempt counting and next retry timestamps
-- **Method Support** - GET, POST, multipart requests with full parameter preservation
+- **Service Registration** - Initializes logging and connectivity helpers
+- **Client Factory** - Creates configured `ApiClient` instances
 
 ### 🅲️ **ConnectivityWrapper**
 Widget that responds to network state changes with automatic callbacks and user notifications.
 - **Reconnection Callbacks** - Execute code when connectivity is restored
 - **Global Notifications** - Automatic snackbar notifications for connection state
 - **Smart Debouncing** - Prevents notification spam during connection fluctuations
+- **Visibility Guard** - Optional `onlyWhenVisible` gate ensures callbacks only fire when the wrapper's route is active
 
 ### �️ **DevLogger**
 Colored console logger with debug-mode support, perfect for development and debugging.
 - **Colored Output** - Green success, yellow/red errors, blue info messages
 - **Debug-Only** - Automatically disabled in release builds for zero performance impact
 - **Structured Logging** - JSON-like data logging with timestamps
-- **Specialized Methods** - `success()`, `error()`, `info()`, `api()`, `pagination()`, `connectivity()`, `cache()`
+- **Specialized Methods** - `success()`, `error()`, `info()`, `api()`, `pagination()`, `connectivity()`
 - **Multi-Channel** - Both `developer.log()` and `debugPrint()` for maximum visibility
 - **Stack Traces** - Complete error context with stack trace logging
 
@@ -284,28 +273,6 @@ ListView.builder(
 );
 ```
 
-### �🆁️ **RequestCacheManager**
-Central orchestrator for offline request queuing, persistence, and replay functionality.
-- **Singleton Pattern** - Global instance manages all cached requests
-- **Disk Persistence** - Requests survive app restarts via `RequestCacheStore`
-- **Replay Logic** - Intelligent request replay when connectivity is restored
-- **Retry Policies** - Configurable retry attempts and backoff strategies
-- **Memory + Disk** - In-memory queue with persistent storage backup
-
-### 🆁️ **RequestCacheStore**
-File-based persistence layer for cached requests with JSON serialization.
-- **File Storage** - JSON file storage in app support directory
-- **CRUD Operations** - Create, read, update, delete cached requests
-- **Error Recovery** - Graceful handling of corrupted cache files
-- **Custom Directory** - Configurable storage location for testing
-
-### 🆁️ **RetryPolicy**
-Configurable retry strategy with exponential backoff and attempt limits.
-- **Exponential Backoff** - Configurable backoff factor and maximum delay
-- **Attempt Limits** - Maximum retry attempts per request
-- **Error Filtering** - Smart retry decisions based on error types
-- **Server Error Control** - Optional retry for server errors (5xx)
-
 ### 🆂️ **StateHandler<T, D>**
 Generic widget for handling single-request states with provider integration and retry support.
 - **Provider Integration** - Works with any `ChangeNotifier` via Selector
@@ -325,3 +292,13 @@ Utility class providing one-line setup for all package services and configuratio
 ## Additional information
 
 This package backs the demo app in the repository root. Feel free to adapt it to your own provider or state management setup. Contributions are welcome—open an issue or pull request.
+
+## Production checklist ✅
+
+When you adopt `state_provider` in a production app, make sure to:
+
+1. Initialize shared services early via `StateProviderBootstrap.initialize`, providing environment-specific `baseHost` and `basePath` values.
+2. Configure logging with `LoggerService.init`, optionally supplying a custom `LogSink` or adjusting `maxFileBytes` / `maxBackupFiles` for rotation policies.
+3. Keep continuous integration green—see the included `.github/workflows/ci.yaml` for an example running `flutter analyze` and `flutter test --coverage` on every push/PR.
+4. Wire pagination and async handlers through widget tests similar to those in `test/state_handler_widget_test.dart` to guard regression paths.
+5. Monitor API failures using the structured `AppError` types and consider forwarding `LogSink` output to your observability stack.

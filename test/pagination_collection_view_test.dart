@@ -47,6 +47,7 @@ void main() {
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
               ),
+              shrinkWrap: true,
               loadMoreError: 'boom',
               onRetryLoadMore: () async {},
               itemBuilder: (context, index, item) =>
@@ -61,6 +62,10 @@ void main() {
       expect(find.byType(GridView), findsOneWidget);
       expect(find.text('Grid 1'), findsOneWidget);
       expect(find.text('Grid 4'), findsOneWidget);
+
+      await tester.fling(find.byType(GridView), const Offset(0, -500), 1000);
+      await tester.pumpAndSettle();
+
       expect(find.text('Error while loading more: boom'), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
     });

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: packages/state_provider
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: packages/state_provider
+        run: flutter analyze
+
+      - name: Run tests with coverage
+        working-directory: packages/state_provider
+        run: flutter test --coverage
+
+      - name: Upload coverage report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: packages/state_provider/coverage/lcov.info
