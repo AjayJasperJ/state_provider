@@ -17,6 +17,14 @@ class StateProviderBootstrap {
     bool initializeLogger = true,
     bool initializeInternetService = true,
   }) async {
+    // Validate inputs
+    if (baseHost.isEmpty) {
+      throw ArgumentError.value(baseHost, 'baseHost', 'Cannot be empty');
+    }
+    if (basePath.isEmpty) {
+      throw ArgumentError.value(basePath, 'basePath', 'Cannot be empty');
+    }
+
     await HostServer.init(baseHost: baseHost, basePath: basePath);
 
     if (initializeLogger) {

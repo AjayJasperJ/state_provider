@@ -13,6 +13,7 @@ class InternetService with ChangeNotifier {
 
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<List<ConnectivityResult>>? _subscription;
+  Timer? _bannerTimer;
 
   // Singleton pattern
   static final InternetService _instance = InternetService._internal();
@@ -43,7 +44,8 @@ class InternetService with ChangeNotifier {
 
       // Auto-hide banner after 3 seconds if reconnected
       if (_isConnected) {
-        Future.delayed(const Duration(seconds: 3), () {
+        _bannerTimer?.cancel();
+        _bannerTimer = Timer(const Duration(seconds: 3), () {
           _showOfflineBanner = false;
           notifyListeners();
         });
@@ -53,12 +55,14 @@ class InternetService with ChangeNotifier {
 
   void hideBanner() {
     _showOfflineBanner = false;
+    _bannerTimer?.cancel();
     notifyListeners();
   }
 
   @override
   void dispose() {
     _subscription?.cancel();
+    _bannerTimer?.cancel();
     super.dispose();
   }
 }

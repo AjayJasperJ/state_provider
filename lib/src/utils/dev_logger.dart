@@ -28,19 +28,12 @@ class DevLogger {
           name: _name,
           level: 800, // Info level
         );
-
-        if (data != null) {
-          developer.log(
-            '$_greenColor📄 Data: $data$_resetColor',
-            time: now,
-            name: _name,
-            level: 800,
-          );
-        }
-
         debugPrint('[$timestamp] $formattedMessage');
+
         if (data != null) {
-          debugPrint('[$timestamp] $_greenColor📄 Data: $data$_resetColor');
+          final dataMessage = '$_greenColor📄 Data: $data$_resetColor';
+          developer.log(dataMessage, time: now, name: _name, level: 800);
+          debugPrint('[$timestamp] $dataMessage');
         }
       });
 
@@ -64,19 +57,12 @@ class DevLogger {
       error: error,
       stackTrace: stackTrace,
     );
-
-    if (error != null) {
-      developer.log(
-        '$_redColor🔥 Error Details: $error$_resetColor',
-        time: now,
-        name: _name,
-        level: 1000,
-      );
-    }
-
     debugPrint('[$timestamp] $formattedMessage');
+
     if (error != null) {
-      debugPrint('[$timestamp] $_redColor🔥 Error Details: $error$_resetColor');
+      final errorMessage = '$_redColor🔥 Error Details: $error$_resetColor';
+      developer.log(errorMessage, time: now, name: _name, level: 1000);
+      debugPrint('[$timestamp] $errorMessage');
     }
     if (stackTrace != null) {
       debugPrint(
@@ -94,19 +80,12 @@ class DevLogger {
             '$_blueColor$_boldColor💡 [$logTag] $message$_resetColor';
 
         developer.log(formattedMessage, time: now, name: _name, level: 800);
-
-        if (data != null) {
-          developer.log(
-            '$_blueColor📄 Data: $data$_resetColor',
-            time: now,
-            name: _name,
-            level: 800,
-          );
-        }
-
         debugPrint('[$timestamp] $formattedMessage');
+
         if (data != null) {
-          debugPrint('[$timestamp] $_blueColor📄 Data: $data$_resetColor');
+          final dataMessage = '$_blueColor📄 Data: $data$_resetColor';
+          developer.log(dataMessage, time: now, name: _name, level: 800);
+          debugPrint('[$timestamp] $dataMessage');
         }
       });
 
@@ -134,41 +113,31 @@ class DevLogger {
       name: _name,
       level: isSuccess ? 800 : 900,
     );
+    debugPrint('[$timestamp] $message');
 
     if (queryParams != null && queryParams.isNotEmpty) {
-      developer.log(
-        '$color🔍 Query Params: $queryParams$_resetColor',
-        name: _name,
-      );
-      debugPrint(
-        '[$timestamp] $color🔍 Query Params: $queryParams$_resetColor',
-      );
+      final queryMessage = '$color🔍 Query Params: $queryParams$_resetColor';
+      developer.log(queryMessage, name: _name);
+      debugPrint('[$timestamp] $queryMessage');
     }
 
     if (headers != null && headers.isNotEmpty) {
-      developer.log('$color📋 Headers: $headers$_resetColor', name: _name);
-      debugPrint('[$timestamp] $color📋 Headers: $headers$_resetColor');
+      final headersMessage = '$color📋 Headers: $headers$_resetColor';
+      developer.log(headersMessage, name: _name);
+      debugPrint('[$timestamp] $headersMessage');
     }
 
     if (requestBody != null) {
-      developer.log(
-        '$color📤 Request Body: $requestBody$_resetColor',
-        name: _name,
-      );
-      debugPrint(
-        '[$timestamp] $color📤 Request Body: $requestBody$_resetColor',
-      );
+      final bodyMessage = '$color📤 Request Body: $requestBody$_resetColor';
+      developer.log(bodyMessage, name: _name);
+      debugPrint('[$timestamp] $bodyMessage');
     }
 
     if (responseData != null) {
-      developer.log(
-        '$color📥 Response: $responseData$_resetColor',
-        name: _name,
-      );
-      debugPrint('[$timestamp] $color📥 Response: $responseData$_resetColor');
+      final responseMessage = '$color📥 Response: $responseData$_resetColor';
+      developer.log(responseMessage, name: _name);
+      debugPrint('[$timestamp] $responseMessage');
     }
-
-    debugPrint('[$timestamp] $message');
   });
 
   static void pagination(String event, {Object? data}) {

@@ -30,35 +30,23 @@ class ApiClient {
     Map<String, String>? headers,
     String? logKey,
   }) async {
-    try {
-      final uri = _buildUri(path, queryParameters);
-      final combinedHeaders = await _buildHeaders(
-        authenticated: authenticated,
-        additional: headers,
-      );
-      final response = await _httpClient.get(uri, headers: combinedHeaders);
-      return _handleResponse(
-        response,
-        logKey: logKey,
-        request: {
-          'method': 'GET',
-          'path': path,
-          if (queryParameters != null && queryParameters.isNotEmpty)
-            'query': queryParameters,
-        },
-      );
-    } on SocketException catch (error, stackTrace) {
-      await _logFailure(logKey, error: error, stackTrace: stackTrace);
-      return AppFailure(ApiErrorFactory.network(error, stackTrace: stackTrace));
-    } on TimeoutException catch (error, stackTrace) {
-      await _logFailure(logKey, error: error, stackTrace: stackTrace);
-      return AppFailure(ApiErrorFactory.timeout(stackTrace: stackTrace));
-    } catch (error, stackTrace) {
-      await _logFailure(logKey, error: error, stackTrace: stackTrace);
-      return AppFailure(
-        ApiErrorFactory.unknown(error: error, stackTrace: stackTrace),
-      );
-    }
+    return _executeRequest(
+      () async {
+        final uri = _buildUri(path, queryParameters);
+        final combinedHeaders = await _buildHeaders(
+          authenticated: authenticated,
+          additional: headers,
+        );
+        return _httpClient.get(uri, headers: combinedHeaders);
+      },
+      logKey: logKey,
+      request: {
+        'method': 'GET',
+        'path': path,
+        if (queryParameters != null && queryParameters.isNotEmpty)
+          'query': queryParameters,
+      },
+    );
   }
 
   Future<AppResult<ApiResponse<Map<String, dynamic>>>> postJson(
@@ -74,45 +62,28 @@ class ApiClient {
       'Provide either jsonBody or formBody, not both',
     );
 
-    try {
-      final uri = _buildUri(path, null);
-      final combinedHeaders = await _buildHeaders(
-        authenticated: authenticated,
-        additional: headers,
-        contentType: jsonBody != null
-            ? 'application/json'
-            : 'application/x-www-form-urlencoded',
-      );
+    return _executeRequest(
+      () async {
+        final uri = _buildUri(path, null);
+        final combinedHeaders = await _buildHeaders(
+          authenticated: authenticated,
+          additional: headers,
+          contentType: jsonBody != null
+              ? 'application/json'
+              : 'application/x-www-form-urlencoded',
+        );
 
-      final body = jsonBody != null ? jsonEncode(jsonBody) : formBody;
-      final response = await _httpClient.post(
-        uri,
-        headers: combinedHeaders,
-        body: body,
-      );
-
-      return _handleResponse(
-        response,
-        logKey: logKey,
-        request: {
-          'method': 'POST',
-          'path': path,
-          if (jsonBody != null) 'body': jsonBody,
-          if (formBody != null) 'body': formBody,
-        },
-      );
-    } on SocketException catch (error, stackTrace) {
-      await _logFailure(logKey, error: error, stackTrace: stackTrace);
-      return AppFailure(ApiErrorFactory.network(error, stackTrace: stackTrace));
-    } on TimeoutException catch (error, stackTrace) {
-      await _logFailure(logKey, error: error, stackTrace: stackTrace);
-      return AppFailure(ApiErrorFactory.timeout(stackTrace: stackTrace));
-    } catch (error, stackTrace) {
-      await _logFailure(logKey, error: error, stackTrace: stackTrace);
-      return AppFailure(
-        ApiErrorFactory.unknown(error: error, stackTrace: stackTrace),
-      );
-    }
+        final body = jsonBody != null ? jsonEncode(jsonBody) : formBody;
+        return _httpClient.post(uri, headers: combinedHeaders, body: body);
+      },
+      logKey: logKey,
+      request: {
+        'method': 'POST',
+        'path': path,
+        if (jsonBody != null) 'body': jsonBody,
+        if (formBody != null) 'body': formBody,
+      },
+    );
   }
 
   Future<AppResult<ApiResponse<Map<String, dynamic>>>> sendMultipart(
@@ -123,31 +94,41 @@ class ApiClient {
     Map<String, http.MultipartFile>? files,
     String? logKey,
   }) async {
-    try {
-      final uri = _buildUri(path, null);
-      final request = http.MultipartRequest('POST', uri);
-      final combinedHeaders = await _buildHeaders(
-        authenticated: authenticated,
-        additional: headers,
-      );
-      request.headers.addAll(combinedHeaders);
-      request.fields.addAll(fields);
-      if (files != null && files.isNotEmpty) {
-        request.files.addAll(files.values);
-      }
+    return _executeRequest(
+      () async {
+        final uri = _buildUri(path, null);
+        final request = http.MultipartRequest('POST', uri);
+        final combinedHeaders = await _buildHeaders(
+          authenticated: authenticated,
+          additional: headers,
+        );
+        request.headers.addAll(combinedHeaders);
+        request.fields.addAll(fields);
+        if (files != null && files.isNotEmpty) {
+          request.files.addAll(files.values);
+        }
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-      return _handleResponse(
-        response,
-        logKey: logKey,
-        request: {
-          'method': 'POST_MULTIPART',
-          'path': path,
-          'fields': fields,
-          if (files != null) 'files': files.keys.toList(),
-        },
-      );
+        final streamedResponse = await request.send();
+        return http.Response.fromStream(streamedResponse);
+      },
+      logKey: logKey,
+      request: {
+        'method': 'POST_MULTIPART',
+        'path': path,
+        'fields': fields,
+        if (files != null) 'files': files.keys.toList(),
+      },
+    );
+  }
+
+  Future<AppResult<ApiResponse<Map<String, dynamic>>>> _executeRequest(
+    Future<http.Response> Function() requestFunction, {
+    String? logKey,
+    Map<String, Object?>? request,
+  }) async {
+    try {
+      final response = await requestFunction();
+      return _handleResponse(response, logKey: logKey, request: request);
     } on SocketException catch (error, stackTrace) {
       await _logFailure(logKey, error: error, stackTrace: stackTrace);
       return AppFailure(ApiErrorFactory.network(error, stackTrace: stackTrace));

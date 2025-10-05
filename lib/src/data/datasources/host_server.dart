@@ -5,21 +5,21 @@ class HostServer {
   static bool _initialized = false;
 
   static String get baseHost {
-    if (!_initialized || _baseHost == null) {
-      throw Exception(
-        'HostServer not initialized. Call HostServer.init() first.',
-      );
-    }
+    _assertInitialized();
     return _baseHost!;
   }
 
   static String get basePath {
-    if (!_initialized || _basePath == null) {
+    _assertInitialized();
+    return _basePath!;
+  }
+
+  static void _assertInitialized() {
+    if (!_initialized) {
       throw Exception(
         'HostServer not initialized. Call HostServer.init() first.',
       );
     }
-    return _basePath!;
   }
 
   static Future<void> init({

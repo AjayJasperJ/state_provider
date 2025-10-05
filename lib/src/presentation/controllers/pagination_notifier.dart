@@ -274,9 +274,8 @@ class PaginationNotifier<D, E> extends ChangeNotifier {
 
     final selector = _keySelector;
     if (!_enableDeduplication || selector == null) {
-      final base = replace ? <D>[] : List<D>.from(_state.items);
-      base.addAll(incoming);
-      return base;
+      if (replace) return List<D>.from(incoming);
+      return [..._state.items, ...incoming];
     }
 
     final buffer = replace ? <D>[] : List<D>.from(_state.items);

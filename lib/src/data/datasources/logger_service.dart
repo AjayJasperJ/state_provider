@@ -36,8 +36,11 @@ class FileLogSink implements LogSink {
 
   Future<void> _rotateIfNeeded(int incomingLength) async {
     if (maxBytes <= 0) return;
+    
     final exists = await _file.exists();
-    final currentSize = exists ? await _file.length() : 0;
+    if (!exists) return;
+    
+    final currentSize = await _file.length();
     if (currentSize + incomingLength <= maxBytes) return;
 
     if (maxBackups <= 0) {
@@ -45,6 +48,7 @@ class FileLogSink implements LogSink {
       return;
     }
 
+    // Rotate backup files in reverse order
     for (var index = maxBackups - 1; index >= 1; index--) {
       final older = File('${_file.path}.$index');
       final newer = File('${_file.path}.${index + 1}');
@@ -56,13 +60,14 @@ class FileLogSink implements LogSink {
       }
     }
 
+    // Move current file to .1
     final rollover = File('${_file.path}.1');
     if (await rollover.exists()) {
       await rollover.delete();
     }
-    if (await _file.exists()) {
-      await _file.rename(rollover.path);
-    }
+    await _file.rename(rollover.path);
+    
+    // Create new empty file
     await _file.writeAsString('');
   }
 
@@ -186,9 +191,8 @@ class LoggerService {
   }
 
   static Future<void> _write(Map<String, dynamic> entry) async {
-    final sink = _sink;
-    if (sink == null) return;
-    await sink.write(entry);
+    if (_sink == null) return;
+    await _sink!.write(entry);
   }
 
   static Future<void> clearLogs() async {
@@ -198,18 +202,16 @@ class LoggerService {
 
   static Future<String> getLogPath() async {
     await ensureInitialized();
-    final sink = _sink;
-    if (sink == null) return 'Log sink not initialized';
-    return sink.location();
+    if (_sink == null) return 'Log sink not initialized';
+    return _sink!.location();
   }
 
   static Future<String> readLogs() async {
     await ensureInitialized();
-    final sink = _sink;
-    if (sink is FileLogSink) {
-      return sink.readAll();
+    if (_sink is! FileLogSink) {
+      return 'Current log sink does not support readLogs.';
     }
-    return 'Current log sink does not support readLogs.';
+    return (_sink as FileLogSink).readAll();
   }
 
   /// Resets underlying state. Useful for tests.

@@ -52,28 +52,22 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
     if (last == current) return;
     _lastState = current;
 
-    // Global toast logic
+    // Global toast logic with debouncing
     if (_lastGlobalState != current) {
       _lastGlobalState = current;
       _globalDebounce?.cancel();
       _globalDebounce = Timer(const Duration(milliseconds: 300), () {
-        if (!current) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              behavior: SnackBarBehavior.floating,
-              content: Text('Internet Disconnected'),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Internet Connected'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+        if (!mounted) return;
+        final message = current ? 'Internet Connected' : 'Internet Disconnected';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text(message),
+          ),
+        );
       });
     }
+
     if (current) {
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 300), () {
