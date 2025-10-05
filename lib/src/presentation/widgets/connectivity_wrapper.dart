@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../data/datasources/internet_service.dart';
 import '../../utils/dev_logger.dart';
 
@@ -104,4 +105,49 @@ class _ConnectivityWrapperState extends State<ConnectivityWrapper> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+typedef ConnectivityProviderCallback<T> = FutureOr<void> Function(T provider);
+
+/// Convenience wrapper that reads a Provider of type [T] before executing the
+/// reconnect callback. Use this when your refresh logic depends on a
+/// ChangeNotifier or other provider instance.
+class ConnectivityWrapperProvider<T> extends StatelessWidget {
+  const ConnectivityWrapperProvider({
+    super.key,
+    required this.child,
+    required this.onReconnect,
+    this.onlyWhenVisible = true,
+  });
+
+  final Widget child;
+  final ConnectivityProviderCallback<T> onReconnect;
+  final bool onlyWhenVisible;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConnectivityWrapper(
+      onlyWhenVisible: onlyWhenVisible,
+      onReconnect: () {
+        late T provider;
+        try {
+          provider = context.read<T>();
+        } catch (error, stackTrace) {
+          DevLogger.error(
+            'ConnectivityWrapperProvider could not read provider of type $T',
+            tag: 'CONNECTIVITY_WRAPPER_PROVIDER',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          return;
+        }
+
+        final result = onReconnect(provider);
+        if (result is Future) {
+          unawaited(result);
+        }
+      },
+      child: child,
+    );
+  }
 }

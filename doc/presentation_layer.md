@@ -56,10 +56,11 @@ Helper ListView that renders items plus inline loading/error footers.
 
 ### `connectivity_wrapper.dart`
 Listens to `InternetService` and reacts to connectivity changes.
-- Shows snackbars or banners when the device goes offline/online.
-- Optional `onReconnected` callback to auto-retry operations.
+- `ConnectivityWrapper`: base widget that exposes an `onReconnect` callback without automatically reading providers.
+- `ConnectivityWrapperProvider<T>`: convenience wrapper that injects a provider of type `T` into the reconnect callback, saving you from calling `context.read<T>()` manually.
+- Both variants show snackbars when the device goes offline/online using shared debounced notifications.
 
-**Use it when:** wrapping screens that should respond to network changes, especially ones with pagination or long-running requests.
+**Use them when:** wrapping screens that should respond to network changes, especially ones with pagination or long-running requests. Use the provider variant for automatic retries that depend on a notifier instance.
 
 ## Composition tips
 

@@ -152,8 +152,9 @@ One-line initialization utility for setting up all core services and dependencie
 - **Client Factory** - Creates configured `ApiClient` instances
 
 ### 🅲️ **ConnectivityWrapper**
-Widget that responds to network state changes with automatic callbacks and user notifications.
+Widget family that responds to network state changes with automatic callbacks and user notifications.
 - **Reconnection Callbacks** - Execute code when connectivity is restored
+- **Provider Injection** - `ConnectivityWrapperProvider<T>` automatically reads the provider of type `T` and passes it to your reconnect callback
 - **Global Notifications** - Automatic snackbar notifications for connection state
 - **Smart Debouncing** - Prevents notification spam during connection fluctuations
 - **Visibility Guard** - Optional `onlyWhenVisible` gate ensures callbacks only fire when the wrapper's route is active

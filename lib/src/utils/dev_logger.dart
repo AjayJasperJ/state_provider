@@ -1,8 +1,8 @@
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 
-/// Developer logger with colored console output
-/// Only logs in debug mode for development purposes
+/// Developer logger with colored console output.
+/// Emits output only in debug mode to avoid leaking logs in release builds.
 class DevLogger {
   static const String _name = 'DevLogger';
 
@@ -14,55 +14,51 @@ class DevLogger {
   static const String _resetColor = '\x1B[0m'; // Reset
   static const String _boldColor = '\x1B[1m'; // Bold
 
-  /// Log a success message in green color
-  static void success(String message, {String? tag, Object? data}) {
-    if (!kDebugMode) return;
+  static void success(String message, {String? tag, Object? data}) =>
+      _runInDebug(() {
+        final logTag = tag ?? 'SUCCESS';
+        final now = DateTime.now();
+        final timestamp = now.toIso8601String();
+        final formattedMessage =
+            '$_greenColor$_boldColor✅ [$logTag] $message$_resetColor';
 
-    final String logTag = tag ?? 'SUCCESS';
-    final String timestamp = DateTime.now().toIso8601String();
-    final String formattedMessage =
-        '$_greenColor$_boldColor✅ [$logTag] $message$_resetColor';
+        developer.log(
+          formattedMessage,
+          time: now,
+          name: _name,
+          level: 800, // Info level
+        );
 
-    developer.log(
-      formattedMessage,
-      time: DateTime.now(),
-      name: _name,
-      level: 800, // Info level
-    );
+        if (data != null) {
+          developer.log(
+            '$_greenColor📄 Data: $data$_resetColor',
+            time: now,
+            name: _name,
+            level: 800,
+          );
+        }
 
-    if (data != null) {
-      developer.log(
-        '$_greenColor📄 Data: $data$_resetColor',
-        time: DateTime.now(),
-        name: _name,
-        level: 800,
-      );
-    }
+        debugPrint('[$timestamp] $formattedMessage');
+        if (data != null) {
+          debugPrint('[$timestamp] $_greenColor📄 Data: $data$_resetColor');
+        }
+      });
 
-    // Also print to console for better visibility during development
-    debugPrint('[$timestamp] $formattedMessage');
-    if (data != null) {
-      debugPrint('[$timestamp] $_greenColor📄 Data: $data$_resetColor');
-    }
-  }
-
-  /// Log an error message in yellow/red color
   static void error(
     String message, {
     String? tag,
     Object? error,
     StackTrace? stackTrace,
-  }) {
-    if (!kDebugMode) return;
-
-    final String logTag = tag ?? 'ERROR';
-    final String timestamp = DateTime.now().toIso8601String();
-    final String formattedMessage =
+  }) => _runInDebug(() {
+    final logTag = tag ?? 'ERROR';
+    final now = DateTime.now();
+    final timestamp = now.toIso8601String();
+    final formattedMessage =
         '$_yellowColor$_boldColor❌ [$logTag] $message$_resetColor';
 
     developer.log(
       formattedMessage,
-      time: DateTime.now(),
+      time: now,
       name: _name,
       level: 1000, // Error level
       error: error,
@@ -72,57 +68,48 @@ class DevLogger {
     if (error != null) {
       developer.log(
         '$_redColor🔥 Error Details: $error$_resetColor',
-        time: DateTime.now(),
+        time: now,
         name: _name,
         level: 1000,
       );
     }
 
-    // Also print to console for better visibility during development
     debugPrint('[$timestamp] $formattedMessage');
     if (error != null) {
       debugPrint('[$timestamp] $_redColor🔥 Error Details: $error$_resetColor');
     }
-    if (stackTrace != null && kDebugMode) {
+    if (stackTrace != null) {
       debugPrint(
         '[$timestamp] $_redColor📍 Stack Trace: $stackTrace$_resetColor',
       );
     }
-  }
+  });
 
-  /// Log an info message in blue color
-  static void info(String message, {String? tag, Object? data}) {
-    if (!kDebugMode) return;
+  static void info(String message, {String? tag, Object? data}) =>
+      _runInDebug(() {
+        final logTag = tag ?? 'INFO';
+        final now = DateTime.now();
+        final timestamp = now.toIso8601String();
+        final formattedMessage =
+            '$_blueColor$_boldColor💡 [$logTag] $message$_resetColor';
 
-    final String logTag = tag ?? 'INFO';
-    final String timestamp = DateTime.now().toIso8601String();
-    final String formattedMessage =
-        '$_blueColor$_boldColor💡 [$logTag] $message$_resetColor';
+        developer.log(formattedMessage, time: now, name: _name, level: 800);
 
-    developer.log(
-      formattedMessage,
-      time: DateTime.now(),
-      name: _name,
-      level: 800,
-    );
+        if (data != null) {
+          developer.log(
+            '$_blueColor📄 Data: $data$_resetColor',
+            time: now,
+            name: _name,
+            level: 800,
+          );
+        }
 
-    if (data != null) {
-      developer.log(
-        '$_blueColor📄 Data: $data$_resetColor',
-        time: DateTime.now(),
-        name: _name,
-        level: 800,
-      );
-    }
+        debugPrint('[$timestamp] $formattedMessage');
+        if (data != null) {
+          debugPrint('[$timestamp] $_blueColor📄 Data: $data$_resetColor');
+        }
+      });
 
-    // Also print to console for better visibility during development
-    debugPrint('[$timestamp] $formattedMessage');
-    if (data != null) {
-      debugPrint('[$timestamp] $_blueColor📄 Data: $data$_resetColor');
-    }
-  }
-
-  /// Log API requests and responses
   static void api({
     required String method,
     required String endpoint,
@@ -132,24 +119,22 @@ class DevLogger {
     Object? responseData,
     int? statusCode,
     bool isSuccess = true,
-  }) {
-    if (!kDebugMode) return;
+  }) => _runInDebug(() {
+    final now = DateTime.now();
+    final timestamp = now.toIso8601String();
+    final color = isSuccess ? _greenColor : _yellowColor;
+    final icon = isSuccess ? '📡' : '⚠️';
 
-    final String timestamp = DateTime.now().toIso8601String();
-    final String color = isSuccess ? _greenColor : _yellowColor;
-    final String icon = isSuccess ? '📡' : '⚠️';
-
-    final String message =
+    final message =
         '$color$_boldColor$icon API $method $endpoint${statusCode != null ? ' ($statusCode)' : ''}$_resetColor';
 
     developer.log(
       message,
-      time: DateTime.now(),
+      time: now,
       name: _name,
       level: isSuccess ? 800 : 900,
     );
 
-    // Log additional details
     if (queryParams != null && queryParams.isNotEmpty) {
       developer.log(
         '$color🔍 Query Params: $queryParams$_resetColor',
@@ -184,23 +169,23 @@ class DevLogger {
     }
 
     debugPrint('[$timestamp] $message');
-  }
+  });
 
-  /// Log pagination events
   static void pagination(String event, {Object? data}) {
     info(event, tag: 'PAGINATION', data: data);
   }
 
-  /// Log connectivity events
   static void connectivity(String event, {bool isConnected = true}) {
-    final String message = isConnected
-        ? 'Connected: $event'
-        : 'Disconnected: $event';
-
+    final message = isConnected ? 'Connected: $event' : 'Disconnected: $event';
     if (isConnected) {
       success(message, tag: 'CONNECTIVITY');
     } else {
       error(message, tag: 'CONNECTIVITY');
     }
+  }
+
+  static void _runInDebug(void Function() action) {
+    if (!kDebugMode) return;
+    action();
   }
 }
